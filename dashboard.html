@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Dashboard</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="dashboard">
+
+<div id="app-shell"></div>
+
+<main>
+  <div class="card">
+    <h1>Welcome back 👋</h1>
+    <p id="welcomeText" style="color:var(--muted);"></p>
+
+    <div class="admin-only-note" id="roleNote"></div>
+  </div>
+
+  <div class="card">
+    <h2>Quick links</h2>
+    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 14px;">
+      <a class="btn" style="text-decoration:none; text-align:center;" href="foods.html">View Foods</a>
+      <a class="btn" style="text-decoration:none; text-align:center;" href="plans.html">View Plans</a>
+      <a class="btn" style="text-decoration:none; text-align:center;" href="profiles.html">View Profiles</a>
+      <a class="btn" style="text-decoration:none; text-align:center;" href="trackers.html">View Meal Trackers</a>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  document.getElementById("welcomeText").textContent =
+    `Logged in as ${getEmail()}.`;
+
+  const note = document.getElementById("roleNote");
+  if (isAdmin()) {
+    note.textContent = "You are an ADMIN — you can create, view, and delete records across Foods, Plans, Profiles, and Meal Trackers.";
+  } else {
+    note.textContent = "You are a USER — you have read-only (view) access across Foods, Plans, Profiles, and Meal Trackers.";
+  }
+</script>
+</body>
+</html>

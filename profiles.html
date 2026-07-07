@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Profiles</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="profiles">
+
+<div id="app-shell"></div>
+
+<main>
+  <div class="card" id="addProfileCard" style="display:none;">
+    <h2>Create Client Profile</h2>
+    <form id="addProfileForm">
+      <div class="form-grid">
+        <div>
+          <label>Account ID</label>
+          <input type="number" id="accountId" required placeholder="e.g. 1" />
+        </div>
+        <div>
+          <label>Age</label>
+          <input type="number" id="age" required placeholder="e.g. 25" />
+        </div>
+        <div>
+          <label>Weight (kg)</label>
+          <input type="number" step="any" id="weightKg" required placeholder="e.g. 65.5" />
+        </div>
+        <div>
+          <label>Height (cm)</label>
+          <input type="number" step="any" id="heightCm" required placeholder="e.g. 170" />
+        </div>
+        <div>
+          <label>Calculated BMR</label>
+          <input type="number" step="any" id="calculatedBmr" required placeholder="e.g. 1500" />
+        </div>
+      </div>
+      <button type="submit" class="primary full-width">Create Profile</button>
+      <div id="addProfileError" class="error-msg"></div>
+      <div id="addProfileSuccess" class="success-msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Client Profiles</h2>
+    <div id="profilesTableWrap">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  if (isAdmin()) {
+    document.getElementById("addProfileCard").style.display = "block";
+  }
+
+  async function loadProfiles() {
+    const wrap = document.getElementById("profilesTableWrap");
+    try {
+      const profiles = await apiCall("/profiles", "GET");
+      if (!profiles || profiles.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No profiles yet.</div>';
+        return;
+      }
+      const rows = profiles
+        .map(
+          (p) => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.accountId}</td>
+          <td>${p.age}</td>
+          <td>${p.weightKg}</td>
+          <td>${p.heightCm}</td>
+          <td>${p.calculatedBmr}</td>
+          <td class="row-actions">
+            ${isAdmin() ? `<button class="delete-btn" onclick="deleteProfile(${p.id})">Delete</button>` : ""}
+          </td>
+        </tr>`
+        )
+        .join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Account ID</th><th>Age</th><th>Weight(kg)</th><th>Height(cm)</th><th>BMR</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    } catch (err) {
+      wrap.innerHTML = `<div class="error-msg visible">${err.message}</div>`;
+    }
+  }
+
+  async function deleteProfile(id) {
+    if (!confirm("Delete this profile?")) return;
+    try {
+      await apiCall(`/profiles/${id}`, "DELETE");
+      loadProfiles();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById("addProfileForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("addProfileError");
+    document.getElementById("addProfileSuccess").classList.remove("visible");
+
+    const payload = {
+      accountId: parseInt(document.getElementById("accountId").value),
+      age: parseInt(document.getElementById("age").value),
+      weightKg: parseFloat(document.getElementById("weightKg").value),
+      heightCm: parseFloat(document.getElementById("heightCm").value),
+      calculatedBmr: parseFloat(document.getElementById("calculatedBmr").value),
+    };
+
+    try {
+      await apiCall("/profiles", "POST", payload);
+      const successEl = document.getElementById("addProfileSuccess");
+      successEl.textContent = "Profile created successfully.";
+      successEl.classList.add("visible");
+      document.getElementById("addProfileForm").reset();
+      loadProfiles();
+    } catch (err) {
+      showError("addProfileError", err.message);
+    }
+  });
+
+  loadProfiles();
+</script>
+</body>
+</html>

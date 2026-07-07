@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Meal Trackers</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="trackers">
+
+<div id="app-shell"></div>
+
+<main>
+  <div class="card" id="logMealCard" style="display:none;">
+    <h2>Log a Meal</h2>
+    <form id="logMealForm">
+      <div class="form-grid">
+        <div>
+          <label>Food ID</label>
+          <input type="number" id="foodId" required placeholder="e.g. 1" />
+        </div>
+        <div>
+          <label>Consumed Serving (g)</label>
+          <input type="number" step="any" id="consumedServingG" required placeholder="e.g. 100" />
+        </div>
+        <div>
+          <label>Meal Type</label>
+          <select id="mealType">
+            <option value="BREAKFAST">BREAKFAST</option>
+            <option value="LUNCH">LUNCH</option>
+            <option value="DINNER">DINNER</option>
+            <option value="SNACK">SNACK</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="primary full-width">Log Meal</button>
+      <div id="logMealError" class="error-msg"></div>
+      <div id="logMealSuccess" class="success-msg"></div>
+    </form>
+    <div class="admin-only-note">Tip: check the Foods page for valid Food IDs first.</div>
+  </div>
+
+  <div class="card">
+    <h2>Logged Meals</h2>
+    <div id="mealsTableWrap">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  if (isAdmin()) {
+    document.getElementById("logMealCard").style.display = "block";
+  }
+
+  async function loadMeals() {
+    const wrap = document.getElementById("mealsTableWrap");
+    try {
+      const meals = await apiCall("/trackers", "GET");
+      if (!meals || meals.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No meals logged yet.</div>';
+        return;
+      }
+      const rows = meals
+        .map(
+          (m) => `
+        <tr>
+          <td>${m.id}</td>
+          <td>${m.trackerId}</td>
+          <td>${m.foodId}</td>
+          <td>${m.consumedServingG}</td>
+          <td>${m.mealType}</td>
+          <td>${m.loggedAt ? new Date(m.loggedAt).toLocaleString() : "-"}</td>
+          <td class="row-actions">
+            ${isAdmin() ? `<button class="delete-btn" onclick="deleteMeal(${m.id})">Delete</button>` : ""}
+          </td>
+        </tr>`
+        )
+        .join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Tracker ID</th><th>Food ID</th><th>Serving(g)</th><th>Type</th><th>Logged At</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    } catch (err) {
+      wrap.innerHTML = `<div class="error-msg visible">${err.message}</div>`;
+    }
+  }
+
+  async function deleteMeal(id) {
+    if (!confirm("Delete this meal record?")) return;
+    try {
+      await apiCall(`/trackers/${id}`, "DELETE");
+      loadMeals();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById("logMealForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("logMealError");
+    document.getElementById("logMealSuccess").classList.remove("visible");
+
+    const payload = {
+      foodId: parseInt(document.getElementById("foodId").value),
+      consumedServingG: parseFloat(document.getElementById("consumedServingG").value),
+      mealType: document.getElementById("mealType").value,
+    };
+
+    try {
+      await apiCall("/trackers", "POST", payload);
+      const successEl = document.getElementById("logMealSuccess");
+      successEl.textContent = "Meal logged successfully.";
+      successEl.classList.add("visible");
+      document.getElementById("logMealForm").reset();
+      loadMeals();
+    } catch (err) {
+      showError("logMealError", err.message);
+    }
+  });
+
+  loadMeals();
+</script>
+</body>
+</html>

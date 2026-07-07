@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Foods</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="foods">
+
+<div id="app-shell"></div>
+
+<main>
+  <div class="card" id="addFoodCard" style="display:none;">
+    <h2>Add Food Item</h2>
+    <form id="addFoodForm">
+      <div class="form-grid">
+        <div>
+          <label>Item Name</label>
+          <input type="text" id="itemName" required placeholder="e.g. Boiled Egg" />
+        </div>
+        <div>
+          <label>Base Serving (g)</label>
+          <input type="number" step="any" id="baseServingG" required placeholder="e.g. 50" />
+        </div>
+        <div>
+          <label>Calories / Serving</label>
+          <input type="number" step="any" id="caloriesPerServing" required placeholder="e.g. 78" />
+        </div>
+        <div>
+          <label>Protein / Serving (g)</label>
+          <input type="number" step="any" id="proteinPerServing" required placeholder="e.g. 6.3" />
+        </div>
+        <div>
+          <label>Carbs / Serving (g)</label>
+          <input type="number" step="any" id="carbsPerServing" required placeholder="e.g. 0.6" />
+        </div>
+        <div>
+          <label>Fat / Serving (g)</label>
+          <input type="number" step="any" id="fatPerServing" required placeholder="e.g. 5.3" />
+        </div>
+      </div>
+      <button type="submit" class="primary full-width">Add Food</button>
+      <div id="addFoodError" class="error-msg"></div>
+      <div id="addFoodSuccess" class="success-msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Food Catalog</h2>
+    <div id="foodsTableWrap">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  if (isAdmin()) {
+    document.getElementById("addFoodCard").style.display = "block";
+  }
+
+  async function loadFoods() {
+    const wrap = document.getElementById("foodsTableWrap");
+    try {
+      const foods = await apiCall("/foods", "GET");
+      if (!foods || foods.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No food items yet.</div>';
+        return;
+      }
+      const rows = foods
+        .map(
+          (f) => `
+        <tr>
+          <td>${f.id}</td>
+          <td>${f.itemName}</td>
+          <td>${f.baseServingG}</td>
+          <td>${f.caloriesPerServing}</td>
+          <td>${f.proteinPerServing}</td>
+          <td>${f.carbsPerServing}</td>
+          <td>${f.fatPerServing}</td>
+          <td class="row-actions">
+            ${isAdmin() ? `<button class="delete-btn" onclick="deleteFood(${f.id})">Delete</button>` : ""}
+          </td>
+        </tr>`
+        )
+        .join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Item</th><th>Base(g)</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    } catch (err) {
+      wrap.innerHTML = `<div class="error-msg visible">${err.message}</div>`;
+    }
+  }
+
+  async function deleteFood(id) {
+    if (!confirm("Delete this food item?")) return;
+    try {
+      await apiCall(`/foods/${id}`, "DELETE");
+      loadFoods();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById("addFoodForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("addFoodError");
+    document.getElementById("addFoodSuccess").classList.remove("visible");
+
+    const payload = {
+      itemName: document.getElementById("itemName").value.trim(),
+      baseServingG: parseFloat(document.getElementById("baseServingG").value),
+      caloriesPerServing: parseFloat(document.getElementById("caloriesPerServing").value),
+      proteinPerServing: parseFloat(document.getElementById("proteinPerServing").value),
+      carbsPerServing: parseFloat(document.getElementById("carbsPerServing").value),
+      fatPerServing: parseFloat(document.getElementById("fatPerServing").value),
+    };
+
+    try {
+      await apiCall("/foods", "POST", payload);
+      const successEl = document.getElementById("addFoodSuccess");
+      successEl.textContent = "Food item added successfully.";
+      successEl.classList.add("visible");
+      document.getElementById("addFoodForm").reset();
+      loadFoods();
+    } catch (err) {
+      showError("addFoodError", err.message);
+    }
+  });
+
+  loadFoods();
+</script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Plans</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="plans">
+
+<div id="app-shell"></div>
+
+<main>
+  <div class="card" id="addPlanCard" style="display:none;">
+    <h2>Create Nutrition Plan</h2>
+    <form id="addPlanForm">
+      <div class="form-grid">
+        <div>
+          <label>Client ID</label>
+          <input type="number" id="clientId" required placeholder="e.g. 1" />
+        </div>
+        <div>
+          <label>Plan Status</label>
+          <input type="text" id="planStatus" value="ACTIVE" />
+        </div>
+        <div>
+          <label>Target Calories</label>
+          <input type="number" step="any" id="targetCalories" required placeholder="e.g. 2000" />
+        </div>
+        <div>
+          <label>Target Protein (g)</label>
+          <input type="number" step="any" id="targetProteinG" required placeholder="e.g. 100" />
+        </div>
+        <div>
+          <label>Target Carbs (g)</label>
+          <input type="number" step="any" id="targetCarbsG" required placeholder="e.g. 250" />
+        </div>
+        <div>
+          <label>Target Fat (g)</label>
+          <input type="number" step="any" id="targetFatG" required placeholder="e.g. 60" />
+        </div>
+      </div>
+      <button type="submit" class="primary full-width">Create Plan</button>
+      <div id="addPlanError" class="error-msg"></div>
+      <div id="addPlanSuccess" class="success-msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Filter by Client</h2>
+    <div class="field-inline">
+      <div>
+        <label>Client ID</label>
+        <input type="number" id="filterClientId" placeholder="e.g. 1" />
+      </div>
+      <button class="btn" onclick="loadPlansByClient()">Search</button>
+      <button class="btn" style="background:var(--muted);" onclick="loadAllPlans()">Show All</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Nutrition Plans</h2>
+    <div id="plansTableWrap">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  if (isAdmin()) {
+    document.getElementById("addPlanCard").style.display = "block";
+  }
+
+  function renderPlans(plans, hasId) {
+    const wrap = document.getElementById("plansTableWrap");
+    if (!plans || plans.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">No plans found.</div>';
+      return;
+    }
+    const rows = plans
+      .map(
+        (p) => `
+      <tr>
+        ${hasId ? `<td>${p.id}</td>` : "<td>-</td>"}
+        <td>${p.clientId}</td>
+        <td>${p.targetCalories}</td>
+        <td>${p.targetProteinG}</td>
+        <td>${p.targetCarbsG}</td>
+        <td>${p.targetFatG}</td>
+        <td>${p.planStatus}</td>
+        <td class="row-actions">
+          ${isAdmin() && hasId ? `<button class="delete-btn" onclick="deletePlan(${p.id})">Delete</button>` : ""}
+        </td>
+      </tr>`
+      )
+      .join("");
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Client ID</th><th>Cal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  async function loadAllPlans() {
+    const wrap = document.getElementById("plansTableWrap");
+    try {
+      const plans = await apiCall("/plans", "GET");
+      renderPlans(plans, false); // /plans returns PlanDto (no id field guaranteed)
+    } catch (err) {
+      wrap.innerHTML = `<div class="error-msg visible">${err.message}</div>`;
+    }
+  }
+
+  async function loadPlansByClient() {
+    const clientId = document.getElementById("filterClientId").value;
+    if (!clientId) {
+      loadAllPlans();
+      return;
+    }
+    const wrap = document.getElementById("plansTableWrap");
+    try {
+      const plans = await apiCall(`/plans/client/${clientId}`, "GET");
+      renderPlans(plans, true); // NutritionPlan entity has id
+    } catch (err) {
+      wrap.innerHTML = `<div class="error-msg visible">${err.message}</div>`;
+    }
+  }
+
+  async function deletePlan(id) {
+    if (!confirm("Delete this plan?")) return;
+    try {
+      await apiCall(`/plans/${id}`, "DELETE");
+      loadPlansByClient();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById("addPlanForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("addPlanError");
+    document.getElementById("addPlanSuccess").classList.remove("visible");
+
+    const payload = {
+      clientId: parseInt(document.getElementById("clientId").value),
+      targetCalories: parseFloat(document.getElementById("targetCalories").value),
+      targetProteinG: parseFloat(document.getElementById("targetProteinG").value),
+      targetCarbsG: parseFloat(document.getElementById("targetCarbsG").value),
+      targetFatG: parseFloat(document.getElementById("targetFatG").value),
+      planStatus: document.getElementById("planStatus").value || "ACTIVE",
+    };
+
+    try {
+      await apiCall("/plans", "POST", payload);
+      const successEl = document.getElementById("addPlanSuccess");
+      successEl.textContent = "Plan created and activated successfully.";
+      successEl.classList.add("visible");
+      document.getElementById("addPlanForm").reset();
+      document.getElementById("planStatus").value = "ACTIVE";
+      loadAllPlans();
+    } catch (err) {
+      showError("addPlanError", err.message);
+    }
+  });
+
+  loadAllPlans();
+</script>
+</body>
+</html>

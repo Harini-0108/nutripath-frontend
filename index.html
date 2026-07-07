@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NutriPath — Login</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="logo">Nutri<span>Path</span></div>
+    <div class="subtitle">Smart Nutrition Tracking System</div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" required placeholder="you@example.com" />
+
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" required placeholder="••••••••" />
+
+      <button type="submit" class="primary full-width">Login</button>
+      <div id="loginError" class="error-msg"></div>
+    </form>
+
+    <div class="switch-link">
+      Don't have an account? <a href="#" id="showRegister">Register here</a>
+    </div>
+
+    <!-- REGISTER FORM (hidden by default) -->
+    <form id="registerForm" style="display:none;">
+      <label for="regEmail">Email</label>
+      <input type="email" id="regEmail" required placeholder="you@example.com" />
+
+      <label for="regPassword">Password</label>
+      <input type="password" id="regPassword" required placeholder="••••••••" />
+
+      <label for="regRole">Role</label>
+      <select id="regRole">
+        <option value="USER">USER</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+
+      <button type="submit" class="primary full-width">Register</button>
+      <div id="registerError" class="error-msg"></div>
+      <div id="registerSuccess" class="success-msg"></div>
+    </form>
+
+    <div class="switch-link" id="backToLoginWrap" style="display:none;">
+      Already have an account? <a href="#" id="showLogin">Login here</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  // If already logged in, go straight to dashboard
+  if (isLoggedIn()) {
+    window.location.href = "dashboard.html";
+  }
+
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const showRegister = document.getElementById("showRegister");
+  const showLogin = document.getElementById("showLogin");
+  const backToLoginWrap = document.getElementById("backToLoginWrap");
+  const switchLinkTop = document.querySelector(".switch-link");
+
+  showRegister.addEventListener("click", (e) => {
+    e.preventDefault();
+    loginForm.style.display = "none";
+    switchLinkTop.style.display = "none";
+    registerForm.style.display = "block";
+    backToLoginWrap.style.display = "block";
+  });
+
+  showLogin.addEventListener("click", (e) => {
+    e.preventDefault();
+    registerForm.style.display = "none";
+    backToLoginWrap.style.display = "none";
+    loginForm.style.display = "block";
+    switchLinkTop.style.display = "block";
+  });
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("loginError");
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+      const data = await apiCall("/auth/login", "POST", { email, password });
+      const token = data.token;
+      const role = decodeJwtRole(token) || "USER";
+      saveSession(token, email, role);
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      showError("loginError", err.message);
+    }
+  });
+
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearError("registerError");
+    document.getElementById("registerSuccess").classList.remove("visible");
+
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const role = document.getElementById("regRole").value;
+
+    try {
+      await apiCall("/auth/register", "POST", { email, password, role });
+      const successEl = document.getElementById("registerSuccess");
+      successEl.textContent = "Registration successful! You can now login.";
+      successEl.classList.add("visible");
+      registerForm.reset();
+    } catch (err) {
+      showError("registerError", err.message);
+    }
+  });
+</script>
+</body>
+</html>
