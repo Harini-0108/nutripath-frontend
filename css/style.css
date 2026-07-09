@@ -176,6 +176,33 @@ input, select {
   font-size: 0.95rem;
   background: #fbfcfb;
 }
+.toggle-pw {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-pw:hover {
+  color: var(--primary);
+}
+
+.toggle-pw.pw-visible {
+  color: var(--primary);
+}
+
+.eye-icon {
+  width: 20px;
+  height: 20px;
+}
 
 .password-wrap {
   position: relative;
@@ -183,22 +210,7 @@ input, select {
 .password-wrap input {
   padding-right: 60px;
 }
-.toggle-pw {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 4px 8px;
-}
-.toggle-pw:hover {
-  text-decoration: underline;
-}
+
 
 input:focus, select:focus {
   outline: 2px solid var(--primary);
