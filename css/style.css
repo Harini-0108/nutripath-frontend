@@ -177,6 +177,29 @@ input, select {
   background: #fbfcfb;
 }
 
+.password-wrap {
+  position: relative;
+}
+.password-wrap input {
+  padding-right: 60px;
+}
+.toggle-pw {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.toggle-pw:hover {
+  text-decoration: underline;
+}
+
 input:focus, select:focus {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
