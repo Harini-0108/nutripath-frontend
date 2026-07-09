@@ -18,7 +18,10 @@
       <input type="email" id="loginEmail" required placeholder="you@example.com" />
 
       <label for="loginPassword">Password</label>
-      <input type="password" id="loginPassword" required placeholder="••••••••" />
+        <div class="password-wrap">
+          <input type="password" id="loginPassword" required placeholder="••••••••" />
+          <button type="button" class="toggle-pw" data-target="loginPassword">Show</button>
+        </div>
 
       <button type="submit" class="primary full-width">Login</button>
       <div id="loginError" class="error-msg"></div>
@@ -34,7 +37,10 @@
       <input type="email" id="regEmail" required placeholder="you@example.com" />
 
       <label for="regPassword">Password</label>
-      <input type="password" id="regPassword" required placeholder="••••••••" />
+         <div class="password-wrap">
+              <input type="password" id="regPassword" required placeholder="••••••••" />
+              <button type="button" class="toggle-pw" data-target="regPassword">Show</button>
+         </div>
 
       <label for="regRole">Role</label>
       <select id="regRole">
@@ -60,6 +66,18 @@
     window.location.href = "dashboard.html";
   }
 
+  document.querySelectorAll(".toggle-pw").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.getAttribute("data-target"));
+    if (input.type === "password") {
+      input.type = "text";
+      btn.textContent = "Hide";
+    } else {
+      input.type = "password";
+      btn.textContent = "Show";
+    }
+  });
+});
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
   const showRegister = document.getElementById("showRegister");
