@@ -20,7 +20,12 @@
       <label for="loginPassword">Password</label>
         <div class="password-wrap">
           <input type="password" id="loginPassword" required placeholder="••••••••" />
-          <button type="button" class="toggle-pw" data-target="loginPassword">Show</button>
+          <button type="button" class="toggle-pw" data-target="loginPassword" aria-label="Show password">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+             <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
         </div>
 
       <button type="submit" class="primary full-width">Login</button>
@@ -39,7 +44,12 @@
       <label for="regPassword">Password</label>
          <div class="password-wrap">
               <input type="password" id="regPassword" required placeholder="••••••••" />
-              <button type="button" class="toggle-pw" data-target="regPassword">Show</button>
+              <button type="button" class="toggle-pw" data-target="regPassword" aria-label="Show password">
+                  <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
          </div>
 
       <label for="regRole">Role</label>
@@ -71,10 +81,10 @@
     const input = document.getElementById(btn.getAttribute("data-target"));
     if (input.type === "password") {
       input.type = "text";
-      btn.textContent = "Hide";
+      btn.classList.add("pw-visible");
     } else {
       input.type = "password";
-      btn.textContent = "Show";
+      btn.classList.remove("pw-visible");
     }
   });
 });
